@@ -10,7 +10,7 @@ fn main() -> Result<(), String> {
     let mut cmd = it.next().map(|name| {
         let mut cmd = Command::new(name);
         cmd.args(it).stdin(Stdio::piped());
-        if options.silent {
+        if options.silence {
             cmd.stdout(Stdio::null());
         }
         cmd
@@ -77,7 +77,7 @@ struct Options {
         long,
         help = "suppress stdout of command (stderr is still propagated)"
     )]
-    silent: bool,
+    silence: bool,
 
     #[structopt(required = false, help = "command to execute and its arguments")]
     cmd_and_args: Vec<String>,

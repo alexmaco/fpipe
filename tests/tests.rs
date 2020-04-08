@@ -60,17 +60,17 @@ fn stdout_propagates_by_default() {
 }
 
 #[test]
-fn stdout_not_propagated_silent_short() {
+fn stdout_not_propagated_silence_short() {
     stdout_not_propagated("-s");
 }
 
 #[test]
-fn stdout_not_propagated_silent_long() {
-    stdout_not_propagated("--silent");
+fn stdout_not_propagated_silence_long() {
+    stdout_not_propagated("--silence");
 }
 
-fn stdout_not_propagated(silent: &str) {
-    assert("abc\ndef\n", &[silent, "echo", "x"])
+fn stdout_not_propagated(silence: &str) {
+    assert("abc\ndef\n", &[silence, "echo", "x"])
         .stdout()
         .is("abc\ndef\n")
         .stderr()
