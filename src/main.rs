@@ -6,15 +6,7 @@ use structopt::*;
 fn main() -> Result<(), String> {
     let options = Options::from_args();
 
-    let mut it = options.cmd_and_args.iter();
-    let mut cmd = it.next().map(|name| {
-        let mut cmd = Command::new(name);
-        cmd.args(it).stdin(Stdio::piped());
-        if options.silence {
-            cmd.stdout(Stdio::null());
-        }
-        cmd
-    });
+    let cmd_name = options.cmd_and_args.iter().next();
 
     let stdin = io::stdin();
     for line in stdin.lock().lines() {
@@ -25,8 +17,23 @@ fn main() -> Result<(), String> {
             }
         };
 
-        if let Some(cmd) = cmd.as_mut() {
-            match run_cmd(&line, cmd) {
+        if let Some(cmd_name) = cmd_name {
+            let mut cmd = Command::new(cmd_name);
+            cmd.args(
+                options
+                    .cmd_and_args
+                    .iter()
+                    .skip(1)
+                    .map(String::as_str)
+                    .map(|arg| if arg == "{}" { &line } else { arg }),
+            )
+            .stdin(Stdio::piped());
+
+            if options.silence {
+                cmd.stdout(Stdio::null());
+            }
+
+            match run_cmd(&line, &mut cmd) {
                 Ok(false) => continue,
                 Ok(true) => {}
                 Err(e) => {
@@ -46,7 +53,7 @@ fn run_cmd(input: &str, cmd: &mut Command) -> io::Result<bool> {
     let write_res = child
         .stdin
         .as_mut()
-        .ok_or(io::Error::from(ErrorKind::BrokenPipe))?
+        .ok_or_else(|| io::Error::from(ErrorKind::BrokenPipe))?
         .write_all(input.as_bytes());
 
     // This is a race that is problematic to test.

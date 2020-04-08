@@ -78,6 +78,16 @@ fn stdout_not_propagated(silence: &str) {
         .unwrap();
 }
 
+#[test]
+fn input_passed_to_command_when_braces_exist() {
+    assert("abc\ndef\n", &["echo", "{}"])
+        .stdout()
+        .is("abc\nabc\ndef\ndef\n")
+        .stderr()
+        .is("")
+        .unwrap();
+}
+
 fn assert(input: &str, args: &[&str]) -> Assert {
     assert_cli::Assert::command(&[env!("CARGO_BIN_EXE_fpipe")])
         .with_args(args)
