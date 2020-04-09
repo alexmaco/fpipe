@@ -19,15 +19,8 @@ fn main() -> Result<(), String> {
 
         if let Some(cmd_name) = cmd_name {
             let mut cmd = Command::new(cmd_name);
-            cmd.args(
-                options
-                    .cmd_and_args
-                    .iter()
-                    .skip(1)
-                    .map(String::as_str)
-                    .map(|arg| if arg == "{}" { &line } else { arg }),
-            )
-            .stdin(Stdio::piped());
+            cmd.args(substitute_cmd_args(&line, &options))
+                .stdin(Stdio::piped());
 
             if options.silence {
                 cmd.stdout(Stdio::null());
@@ -45,6 +38,17 @@ fn main() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+fn substitute_cmd_args<'a>(
+    line: &'a str,
+    options: &'a Options,
+) -> impl Iterator<Item = &'a str> + 'a {
+    options
+        .cmd_and_args
+        .iter()
+        .skip(1)
+        .map(move |arg| if arg == "{}" { line } else { &arg })
 }
 
 fn run_cmd(input: &str, cmd: &mut Command) -> io::Result<bool> {
