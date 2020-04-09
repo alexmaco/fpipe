@@ -88,6 +88,25 @@ fn input_passed_to_command_when_braces_exist() {
         .unwrap();
 }
 
+#[test]
+fn sigpipe_from_output_does_not_trigger_error() {
+    let input: String = std::iter::repeat("abc\n").take(10000).collect();
+    let expected: String = std::iter::repeat("abc\n").take(10).collect();
+
+    // FIXME: maybe pipe processes together
+    Assert::command(&[
+        "/bin/sh",
+        "-c",
+        concat!(env!("CARGO_BIN_EXE_fpipe"), " | head -n 10"),
+    ])
+    .stdin(input)
+    .stdout()
+    .is(expected.as_str())
+    .stderr()
+    .is("")
+    .unwrap();
+}
+
 fn assert(input: &str, args: &[&str]) -> Assert {
     assert_cli::Assert::command(&[env!("CARGO_BIN_EXE_fpipe")])
         .with_args(args)
