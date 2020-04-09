@@ -1,5 +1,5 @@
-use std::io::Write;
 use std::io::{self, BufRead, ErrorKind};
+use std::io::{StdoutLock, Write};
 use std::process::*;
 use structopt::*;
 
@@ -9,6 +9,8 @@ fn main() -> Result<(), String> {
     let cmd_name = options.cmd_and_args.iter().next();
 
     let stdin = io::stdin();
+    let stdout = io::stdout();
+    let mut out = stdout.lock();
     for line in stdin.lock().lines() {
         let line = match line {
             Ok(l) => l,
@@ -34,10 +36,23 @@ fn main() -> Result<(), String> {
                 }
             }
         }
-        println!("{}", line);
+
+        match write_out(&mut out, &line) {
+            Ok(()) => {}
+            Err(e) if e.kind() == ErrorKind::BrokenPipe => {
+                // output died
+                return Ok(());
+            }
+            Err(e) => return Err(format!("Error printing output: {}", e)),
+        }
     }
 
     Ok(())
+}
+
+fn write_out(out: &mut StdoutLock, line: &str) -> io::Result<()> {
+    out.write_all(line.as_bytes())?;
+    out.write_all(b"\n")
 }
 
 fn substitute_cmd_args<'a>(
