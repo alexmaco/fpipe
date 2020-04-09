@@ -37,6 +37,26 @@ fn keep_input_when_command_succeeds() {
 }
 
 #[test]
+fn no_output_when_command_succeeds_but_is_negated() {
+    assert("abc\ndef", &["-n", "true"])
+        .stdout()
+        .is("")
+        .stderr()
+        .is("")
+        .unwrap();
+}
+
+#[test]
+fn keep_input_when_command_fails_but_is_negated() {
+    assert("abc\ndef\n", &["-n", "false"])
+        .stdout()
+        .is("abc\ndef\n")
+        .stderr()
+        .is("")
+        .unwrap();
+}
+
+#[test]
 fn each_line_gets_passed_to_command() {
     let tmp = TempDir::temp().expect("cannot create temporary directory");
     let log_file = tmp.path().join("log");

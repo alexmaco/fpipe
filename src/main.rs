@@ -28,7 +28,7 @@ fn main() -> Result<(), String> {
                 cmd.stdout(Stdio::null());
             }
 
-            match run_cmd(&line, &mut cmd) {
+            match run_cmd(&line, &mut cmd).map(|success| success ^ options.negate) {
                 Ok(false) => continue,
                 Ok(true) => {}
                 Err(e) => {
@@ -104,6 +104,9 @@ struct Options {
         help = "suppress stdout of command (stderr is still propagated)"
     )]
     silence: bool,
+
+    #[structopt(short, long, help = "negate the command exit status")]
+    negate: bool,
 
     #[structopt(required = false, help = "command to execute and its arguments")]
     cmd_and_args: Vec<String>,
