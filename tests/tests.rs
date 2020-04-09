@@ -99,6 +99,25 @@ fn stdout_not_propagated(silence: &str) {
 }
 
 #[test]
+fn only_stdout_propagated_map_short() {
+    basic_map("-m");
+}
+
+#[test]
+fn only_stdout_propagated_map_long() {
+    basic_map("--map");
+}
+
+fn basic_map(map: &str) {
+    assert("abc\ndef\n", &[map, "echo", "x"])
+        .stdout()
+        .is("x\nx\n")
+        .stderr()
+        .is("")
+        .unwrap();
+}
+
+#[test]
 fn input_passed_to_command_when_braces_exist() {
     assert("abc\ndef\n", &["echo", "{}"])
         .stdout()
