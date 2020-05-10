@@ -81,12 +81,12 @@ fn stdout_propagates_by_default() {
 
 #[test]
 fn stdout_not_propagated_silence_short() {
-    stdout_not_propagated("-s");
+    stdout_not_propagated("-q");
 }
 
 #[test]
 fn stdout_not_propagated_silence_long() {
-    stdout_not_propagated("--silence");
+    stdout_not_propagated("--quiet");
 }
 
 fn stdout_not_propagated(silence: &str) {

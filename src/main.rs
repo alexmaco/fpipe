@@ -31,7 +31,7 @@ fn main() -> Result<(), String> {
             cmd.args(substitute_cmd_args(&line, &options))
                 .stdin(Stdio::piped());
 
-            if options.silence {
+            if options.quiet {
                 cmd.stdout(Stdio::null());
             }
 
@@ -138,9 +138,9 @@ struct Options {
     #[structopt(
         short,
         long,
-        help = "suppress stdout of command (stderr is still propagated)"
+        help = "suppress stdout of subcommand (stderr is still propagated)"
     )]
-    silence: bool,
+    quiet: bool,
 
     #[structopt(short, long, help = "negate the command exit status")]
     negate: bool,
