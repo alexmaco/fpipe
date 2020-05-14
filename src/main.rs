@@ -1,76 +1,89 @@
-use std::io::Read;
-use std::io::{self, BufRead, ErrorKind};
-use std::io::{StdoutLock, Write};
-use std::process::*;
+use std::io::ErrorKind;
+use std::process::{Output, Stdio};
+use std::sync::Arc;
 use structopt::*;
+use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt};
+use tokio::process::Command;
+use tokio::runtime;
 
 fn main() -> Result<(), String> {
-    let options = Options::from_args();
+    let options = Arc::new(Options::from_args());
 
-    let cmd_name = options.cmd_and_args.iter().next();
+    let mut rt = runtime::Builder::new()
+        .basic_scheduler()
+        .enable_io()
+        .build()
+        .map_err(|e| format!("Failed to create runtime: {:?}", e))?;
 
-    let mut out_buf = if options.map {
-        Some(Vec::with_capacity(4096))
-    } else {
-        None
-    };
+    rt.block_on(async {
+        let stdin = io::stdin();
+        let buf_read = io::BufReader::new(stdin);
+        let mut lines = buf_read.lines();
+        while let Some(line) = lines
+            .next_line()
+            .await
+            .map_err(|e| format!("Error reading from stdin: {:?}", e))?
+        {
+            let options = options.clone();
+            let cmd_name = options.cmd_and_args.iter().next();
 
-    let stdin = io::stdin();
-    let stdout = io::stdout();
-    let mut out = stdout.lock();
-    for line in stdin.lock().lines() {
-        let line = match line {
-            Ok(l) => l,
-            Err(e) => {
-                return Err(format!("Error reading from stdin: {}", e));
-            }
-        };
+            let out_buf = if let Some(cmd_name) = cmd_name {
+                let mut cmd = Command::new(cmd_name);
+                cmd.args(substitute_cmd_args(&line, &options))
+                    .stdin(Stdio::piped());
 
-        if let Some(cmd_name) = cmd_name {
-            let mut cmd = Command::new(cmd_name);
-            cmd.args(substitute_cmd_args(&line, &options))
-                .stdin(Stdio::piped());
-
-            if options.quiet {
-                cmd.stdout(Stdio::null());
-            }
-
-            if let Some(out_buf) = &mut out_buf {
-                out_buf.clear();
-                cmd.stdout(Stdio::piped());
-            }
-
-            match run_cmd(&line, &mut cmd, out_buf.as_mut()).map(|success| success ^ options.negate)
-            {
-                Ok(false) => continue,
-                Ok(true) => {}
-                Err(e) => {
-                    return Err(format!("Error executing command: {}", e));
+                if options.quiet {
+                    cmd.stdout(Stdio::null());
                 }
-            }
+
+                if options.map {
+                    cmd.stdout(Stdio::piped());
+                }
+
+                match run_cmd(&line, &mut cmd)
+                    .await
+                    .map(|out| (out.status.success() ^ options.negate, out.stdout))
+                {
+                    Ok((false, _)) => return Ok(()),
+                    Ok((true, out_buf)) => {
+                        if options.map {
+                            Some(out_buf)
+                        } else {
+                            None
+                        }
+                    }
+                    Err(e) => {
+                        return Err(format!("Error executing command: {}", e));
+                    }
+                }
+            } else {
+                None
+            };
+
+            match write_out(
+                out_buf.as_deref().unwrap_or_else(|| line.as_bytes()),
+                out_buf.is_none(),
+            )
+            .await
+            {
+                Ok(()) => {}
+                Err(e) if e.kind() == ErrorKind::BrokenPipe => {
+                    // output died
+                    std::process::exit(0);
+                }
+                Err(e) => return Err(format!("Error printing output: {}", e)),
+            };
         }
 
-        match write_out(
-            &mut out,
-            out_buf.as_deref().unwrap_or_else(|| line.as_bytes()),
-            out_buf.is_none(),
-        ) {
-            Ok(()) => {}
-            Err(e) if e.kind() == ErrorKind::BrokenPipe => {
-                // output died
-                return Ok(());
-            }
-            Err(e) => return Err(format!("Error printing output: {}", e)),
-        }
-    }
-
-    Ok(())
+        Ok(())
+    })
 }
 
-fn write_out(out: &mut StdoutLock, data: &[u8], newline: bool) -> io::Result<()> {
-    out.write_all(data)?;
+async fn write_out(data: &[u8], newline: bool) -> io::Result<()> {
+    let mut out = io::stdout();
+    out.write_all(data).await?;
     if newline {
-        out.write_all(b"\n")?;
+        out.write_all(b"\n").await?;
     }
     Ok(())
 }
@@ -86,7 +99,8 @@ fn substitute_cmd_args<'a>(
         .map(move |arg| if arg == "{}" { line } else { &arg })
 }
 
-fn run_cmd(input: &str, cmd: &mut Command, out_buf: Option<&mut Vec<u8>>) -> io::Result<bool> {
+/// Result indicates that subprocess ended with success status
+async fn run_cmd(input: &str, cmd: &mut Command) -> io::Result<Output> {
     macro_rules! unwrap_ignore_sigpipe {
         ($res:expr) => {
             // This is a race that is problematic to test.
@@ -112,23 +126,12 @@ fn run_cmd(input: &str, cmd: &mut Command, out_buf: Option<&mut Vec<u8>>) -> io:
         .stdin
         .as_mut()
         .ok_or_else(|| io::Error::from(ErrorKind::BrokenPipe))?
-        .write_all(input.as_bytes());
+        .write_all(input.as_bytes())
+        .await;
 
     unwrap_ignore_sigpipe!(write_res);
 
-    //FIXME: should probably switch to async to not break for large chunks
-    if let Some(out_buf) = out_buf {
-        let read_res = child
-            .stdout
-            .as_mut()
-            .ok_or_else(|| io::Error::from(ErrorKind::BrokenPipe))?
-            .read_to_end(out_buf);
-
-        unwrap_ignore_sigpipe!(read_res);
-    }
-
-    let status = child.wait()?;
-    Ok(status.success())
+    child.wait_with_output().await
 }
 
 #[derive(StructOpt, Debug)]

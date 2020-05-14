@@ -11,3 +11,7 @@ assert_cli = "0.6.3"
 
 [dependencies]
 structopt = "0.3.12"
+
+[dependencies.tokio]
+version = "0.2.20"
+features = ["io-std", "io-util", "process", "rt-core"]

@@ -129,8 +129,25 @@ fn input_passed_to_command_when_braces_exist() {
 
 #[test]
 fn sigpipe_from_output_does_not_trigger_error() {
-    let input: String = std::iter::repeat("abc\n").take(10000).collect();
-    let expected: String = std::iter::repeat("abc\n").take(10).collect();
+    use std::iter::repeat_with;
+    let input: String = {
+        let mut count = 0;
+        repeat_with(|| {
+            count += 1;
+            count.to_string() + "\n"
+        })
+        .take(10000)
+        .collect()
+    };
+    let expected: String = {
+        let mut count = 0;
+        repeat_with(|| {
+            count += 1;
+            count.to_string() + "\n"
+        })
+        .take(10)
+        .collect()
+    };
 
     // FIXME: maybe pipe processes together
     Assert::command(&[
