@@ -10,8 +10,8 @@ test_dir = "0.1.0"
 assert_cli = "0.6.3"
 
 [dependencies]
-structopt = "0.3.12"
+structopt = "0.3.14"
 
 [dependencies.tokio]
-version = "0.2.20"
+version = "0.2.21"
 features = ["io-std", "io-util", "process", "rt-core"]
