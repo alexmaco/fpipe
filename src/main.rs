@@ -167,7 +167,7 @@ async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Op
 }
 
 #[derive(StructOpt, Debug)]
-#[structopt(about = "filter (and map) items in a pipe")]
+#[structopt(about = "Filter (and map) in a shell pipe")]
 #[structopt(settings = &[clap::AppSettings::TrailingVarArg])]
 struct Options {
     #[structopt(

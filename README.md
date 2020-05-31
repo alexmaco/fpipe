@@ -2,15 +2,39 @@
 
 Filter (and map) in a shell pipe.
 
-## Usage
+## What and Why
+
+For the times you need to filter (or map) in a shell pipe.
+
+Filtering (default):
+- reads input lines
+- runs command for each line
+- prints line if command was successful
+
+Mapping (with `--map`):
+- reads input lines
+- runs command for each line
+- if command was successful, output its stdout instead of the line
+
+## Examples
 
 Only list files that contain cats:
 
-`ls | fpipe --silence grep cats {}`
+`ls | fpipe grep -qi cats {}`
 
 Only keep files that do **not** contain cats:
 
-`cat index | fpipe -n -s grep cats {}`
+`ls | fpipe --negate grep -qi cats {} # -n for short`
+
+Search for files that contain a list of patterns in the name:
+
+`cat patterns | fpipe --map fd {} # -m for short`
+
+## Command syntax
+
+If `{}` is not present in the command arguments, the line is passed to the subprocess via stdin.
+
+If `{}` is given, it is replaced by each line in turn before execution.
 
 ## Installation
 
