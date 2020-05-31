@@ -28,6 +28,9 @@ fn main() -> Result<(), String> {
             let cmd_name = options.cmd_and_args.iter().next();
 
             let out_buf = if let Some(cmd_name) = cmd_name {
+                let executing = cmd_name == "{}";
+                let cmd_name = if executing { &line } else { cmd_name.as_str() };
+
                 let mut cmd = Command::new(cmd_name);
                 let (input, args) = substitute_cmd_args(&line, &options);
                 cmd.args(args);
@@ -56,7 +59,13 @@ fn main() -> Result<(), String> {
                         }
                     }
                     Err(e) => {
-                        return Err(format!("Error executing command: {}", e));
+                        let err = format!("Error executing command: {}", e);
+                        if executing {
+                            eprintln!("{}", err);
+                            continue;
+                        } else {
+                            return Err(err);
+                        }
                     }
                 }
             } else {
