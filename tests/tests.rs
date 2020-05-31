@@ -154,6 +154,16 @@ fn input_run_as_command_via_braces() {
 }
 
 #[test]
+fn input_run_as_command_is_split() {
+    assert("echo abcd", &["--map", "{}"])
+        .stdout()
+        .is("abcd\n")
+        .stderr()
+        .is("")
+        .unwrap();
+}
+
+#[test]
 fn sigpipe_from_output_does_not_trigger_error() {
     use std::iter::repeat_with;
     let input: String = {

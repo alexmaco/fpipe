@@ -29,9 +29,15 @@ fn main() -> Result<(), String> {
 
             let out_buf = if let Some(cmd_name) = cmd_name {
                 let executing = cmd_name == "{}";
-                let cmd_name = if executing { &line } else { cmd_name.as_str() };
+                let mut cmd = if executing {
+                    let mut bits = line.split_whitespace();
+                    let mut cmd = Command::new(bits.next().unwrap());
+                    cmd.args(bits);
+                    cmd
+                } else {
+                    Command::new(cmd_name)
+                };
 
-                let mut cmd = Command::new(cmd_name);
                 let (input, args) = substitute_cmd_args(&line, &options);
                 cmd.args(args);
                 if input.is_some() {
