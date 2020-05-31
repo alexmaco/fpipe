@@ -29,8 +29,11 @@ fn main() -> Result<(), String> {
 
             let out_buf = if let Some(cmd_name) = cmd_name {
                 let mut cmd = Command::new(cmd_name);
-                cmd.args(substitute_cmd_args(&line, &options))
-                    .stdin(Stdio::piped());
+                let (input, args) = substitute_cmd_args(&line, &options);
+                cmd.args(args);
+                if input.is_some() {
+                    cmd.stdin(Stdio::piped());
+                }
 
                 if options.quiet {
                     cmd.stdout(Stdio::null());
@@ -40,7 +43,7 @@ fn main() -> Result<(), String> {
                     cmd.stdout(Stdio::piped());
                 }
 
-                match run_cmd(&line, &mut cmd)
+                match run_cmd(input, &mut cmd)
                     .await
                     .map(|out| (out.status.success() ^ options.negate, out.stdout))
                 {
@@ -91,16 +94,24 @@ async fn write_out(data: &[u8], newline: bool) -> io::Result<()> {
 fn substitute_cmd_args<'a>(
     line: &'a str,
     options: &'a Options,
-) -> impl Iterator<Item = &'a str> + 'a {
-    options
+) -> (Option<&'a str>, impl Iterator<Item = &'a str> + 'a) {
+    let input = if options.cmd_and_args.iter().any(|s| s == "{}") {
+        None
+    } else {
+        Some(line)
+    };
+
+    let args = options
         .cmd_and_args
         .iter()
         .skip(1)
-        .map(move |arg| if arg == "{}" { line } else { &arg })
+        .map(move |arg| if arg == "{}" { line } else { &arg });
+
+    (input, args)
 }
 
 /// Result indicates that subprocess ended with success status
-async fn run_cmd(input: &str, cmd: &mut Command) -> io::Result<Output> {
+async fn run_cmd(input: Option<&str>, cmd: &mut Command) -> io::Result<Output> {
     macro_rules! unwrap_ignore_sigpipe {
         ($res:expr) => {
             // This is a race that is problematic to test.
@@ -122,14 +133,16 @@ async fn run_cmd(input: &str, cmd: &mut Command) -> io::Result<Output> {
 
     let mut child = cmd.spawn()?;
 
-    let write_res = child
-        .stdin
-        .as_mut()
-        .ok_or_else(|| io::Error::from(ErrorKind::BrokenPipe))?
-        .write_all(input.as_bytes())
-        .await;
+    if let Some(input) = input {
+        let write_res = child
+            .stdin
+            .as_mut()
+            .ok_or_else(|| io::Error::from(ErrorKind::BrokenPipe))?
+            .write_all(input.as_bytes())
+            .await;
 
-    unwrap_ignore_sigpipe!(write_res);
+        unwrap_ignore_sigpipe!(write_res);
+    }
 
     child.wait_with_output().await
 }

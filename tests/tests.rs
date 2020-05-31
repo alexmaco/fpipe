@@ -128,6 +128,19 @@ fn input_passed_to_command_when_braces_exist() {
 }
 
 #[test]
+fn input_not_on_stdin_when_braces_exist() {
+    let tmp = TempDir::temp().expect("cannot create temporary directory");
+    let log_file = tmp.path().join("log");
+    let log_file_str = log_file
+        .as_os_str()
+        .to_str()
+        .expect("unexpected non-utf8 in path");
+
+    assert(log_file_str, &["tee", "{}"]).unwrap();
+    assert_eq!("", std::fs::read_to_string(log_file).unwrap());
+}
+
+#[test]
 fn sigpipe_from_output_does_not_trigger_error() {
     use std::iter::repeat_with;
     let input: String = {
