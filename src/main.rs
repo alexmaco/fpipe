@@ -24,47 +24,24 @@ fn main() -> Result<(), String> {
             .await
             .map_err(|e| format!("Error reading from stdin: {:?}", e))?
         {
-            let options = options.clone();
-            let cmd_name = options.cmd_and_args.iter().next();
-
-            let out_buf = if let Some(cmd_name) = cmd_name {
+            let out_buf = if let Some(cmd_name) = options.cmd_and_args.iter().next() {
                 let executing = cmd_name == "{}";
-                let mut cmd = if executing {
-                    let mut bits = line.split_whitespace();
-                    let mut cmd = Command::new(bits.next().unwrap());
-                    cmd.args(bits);
-                    cmd
-                } else {
-                    Command::new(cmd_name)
-                };
 
-                let (input, args) = substitute_cmd_args(&line, &options);
-                cmd.args(args);
-                if input.is_some() {
-                    cmd.stdin(Stdio::piped());
-                }
-
-                if options.quiet {
-                    cmd.stdout(Stdio::null());
-                }
-
-                if options.map {
-                    cmd.stdout(Stdio::piped());
-                }
-
-                match run_cmd(input, &mut cmd)
+                match run_cmd(&line, cmd_name, &options)
                     .await
-                    .map(|out| (out.status.success() ^ options.negate, out.stdout))
+                    .transpose()
+                    .map(|out| out.map(|out| (out.status.success() ^ options.negate, out.stdout)))
                 {
-                    Ok((false, _)) => return Ok(()),
-                    Ok((true, out_buf)) => {
+                    None => None,
+                    Some(Ok((false, _))) => return Ok(()),
+                    Some(Ok((true, out_buf))) => {
                         if options.map {
                             Some(out_buf)
                         } else {
                             None
                         }
                     }
-                    Err(e) => {
+                    Some(Err(e)) => {
                         let err = format!("Error executing command: {}", e);
                         if executing {
                             eprintln!("{}", err);
@@ -125,8 +102,35 @@ fn substitute_cmd_args<'a>(
     (input, args)
 }
 
-/// Result indicates that subprocess ended with success status
-async fn run_cmd(input: Option<&str>, cmd: &mut Command) -> io::Result<Output> {
+async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Option<Output>> {
+    let executing = cmd_name == "{}";
+    let mut cmd = if executing {
+        let mut bits = line.split_whitespace();
+        let first = match bits.next() {
+            Some(b) => b,
+            _ => return Ok(None),
+        };
+        let mut cmd = Command::new(first);
+        cmd.args(bits);
+        cmd
+    } else {
+        Command::new(cmd_name)
+    };
+
+    let (input, args) = substitute_cmd_args(&line, &options);
+    cmd.args(args);
+    if input.is_some() {
+        cmd.stdin(Stdio::piped());
+    }
+
+    if options.quiet {
+        cmd.stdout(Stdio::null());
+    }
+
+    if options.map {
+        cmd.stdout(Stdio::piped());
+    }
+
     macro_rules! unwrap_ignore_sigpipe {
         ($res:expr) => {
             // This is a race that is problematic to test.
@@ -159,7 +163,7 @@ async fn run_cmd(input: Option<&str>, cmd: &mut Command) -> io::Result<Output> {
         unwrap_ignore_sigpipe!(write_res);
     }
 
-    child.wait_with_output().await
+    child.wait_with_output().await.map(Some)
 }
 
 #[derive(StructOpt, Debug)]
