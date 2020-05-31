@@ -143,7 +143,7 @@ fn input_not_on_stdin_when_braces_exist() {
 #[test]
 fn input_run_as_command_via_braces() {
     assert(
-        "echo\ncommand_that_should_not_exist_on_the_system\n",
+        "command_that_should_not_exist_on_the_system\necho\n",
         &["{}"],
     )
     .stdout()
