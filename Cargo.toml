@@ -7,12 +7,12 @@ license = "MIT"
 
 [dev-dependencies]
 test_dir = "0.1.0"
-assert_cmd = "1.0"
+assert_cmd = "1.0.1"
 predicates = "*"
 
 [dependencies]
-structopt = "0.3.14"
+structopt = "0.3.19"
 
 [dependencies.tokio]
-version = "0.2.21"
+version = "0.2.22"
 features = ["io-std", "io-util", "process", "rt-core"]
