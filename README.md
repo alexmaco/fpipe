@@ -20,15 +20,21 @@ Mapping (with `--map`):
 
 Only list files that contain cats:
 
-`ls | fpipe grep -qi cats {}`
+```bash
+ls | fpipe grep -qi cats {}
+```
 
 Only keep files that do **not** contain cats:
 
-`ls | fpipe --negate grep -qi cats {} # -n for short`
+```bash
+ls | fpipe -n grep -qi cats {} # short for --negate
+```
 
 Search for files that contain a list of patterns in the name:
 
-`cat patterns | fpipe --map fd {} # -m for short`
+```bash
+cat patterns | fpipe -m fd {} # short for --map
+```
 
 ## Command syntax
 
