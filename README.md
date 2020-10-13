@@ -44,4 +44,4 @@ If `{}` is given, it is replaced by each line in turn before execution.
 
 ## Installation
 
-`cargo install -f --git https://github.com/alexmaco/fpipe`
+`cargo install --git https://github.com/alexmaco/fpipe`
