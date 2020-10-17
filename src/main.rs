@@ -65,6 +65,8 @@ fn main() -> Result<(), String> {
                 Ok(()) => {}
                 Err(e) if e.kind() == ErrorKind::BrokenPipe => {
                     // output died
+                    // flush and exit, we don't need the dtors
+                    let _ = out.flush().await;
                     std::process::exit(0);
                 }
                 Err(e) => return Err(format!("Error printing output: {}", e)),
@@ -80,7 +82,7 @@ async fn write_out(out: &mut Stdout, data: &[u8], newline: bool) -> io::Result<(
     if newline {
         out.write_all(b"\n").await?;
     }
-    Ok(())
+    out.flush().await
 }
 
 fn substitute_cmd_args<'a>(
