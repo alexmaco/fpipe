@@ -24,7 +24,7 @@ fn main() -> Result<(), String> {
             .await
             .map_err(|e| format!("Error reading from stdin: {:?}", e))?
         {
-            let out_buf = if let Some(cmd_name) = options.cmd_and_args.iter().next() {
+            let out_buf = if let Some(cmd_name) = options.cmd_and_args.get(0) {
                 let executing = cmd_name == "{}";
 
                 match run_cmd(&line, cmd_name, &options)
