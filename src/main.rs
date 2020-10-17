@@ -2,7 +2,7 @@ use std::io::ErrorKind;
 use std::process::{Output, Stdio};
 use std::sync::Arc;
 use structopt::*;
-use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt};
+use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, Stdout};
 use tokio::process::Command;
 use tokio::runtime;
 
@@ -16,6 +16,7 @@ fn main() -> Result<(), String> {
         .map_err(|e| format!("Failed to create runtime: {:?}", e))?;
 
     rt.block_on(async {
+        let mut out = io::stdout();
         let stdin = io::stdin();
         let buf_read = io::BufReader::new(stdin);
         let mut lines = buf_read.lines();
@@ -56,6 +57,7 @@ fn main() -> Result<(), String> {
             };
 
             match write_out(
+                &mut out,
                 out_buf.as_deref().unwrap_or_else(|| line.as_bytes()),
                 out_buf.is_none(),
             )
@@ -74,8 +76,7 @@ fn main() -> Result<(), String> {
     })
 }
 
-async fn write_out(data: &[u8], newline: bool) -> io::Result<()> {
-    let mut out = io::stdout();
+async fn write_out(out: &mut Stdout, data: &[u8], newline: bool) -> io::Result<()> {
     out.write_all(data).await?;
     if newline {
         out.write_all(b"\n").await?;
