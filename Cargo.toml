@@ -14,5 +14,5 @@ predicates = "*"
 structopt = "0.3.19"
 
 [dependencies.tokio]
-version = "0.2.22"
-features = ["io-std", "io-util", "process", "rt-core"]
+version = "0.3.0"
+features = ["io-std", "io-util", "process", "rt"]

@@ -9,8 +9,7 @@ use tokio::runtime;
 fn main() -> Result<(), String> {
     let options = Arc::new(Options::from_args());
 
-    let mut rt = runtime::Builder::new()
-        .basic_scheduler()
+    let rt = runtime::Builder::new_current_thread()
         .enable_io()
         .build()
         .map_err(|e| format!("Failed to create runtime: {:?}", e))?;
