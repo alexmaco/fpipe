@@ -14,7 +14,7 @@ repository = "https://github.com/alexmaco/fpipe"
 [dev-dependencies]
 test_dir = "0.1.0"
 assert_cmd = "1.0.1"
-predicates = "*"
+predicates = "1.0.5"
 
 [dependencies]
 structopt = "0.3.20"
