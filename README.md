@@ -40,8 +40,36 @@ cat patterns | fpipe -m fd {} # short for --map
 
 If `{}` is not present in the command arguments, the line is passed to the subprocess via stdin.
 
-If `{}` is given, it is replaced by each line in turn before execution.
+If `{}` is given, it gets replaced by each line in turn before execution.
 
 ## Installation
 
-`cargo install --git https://github.com/alexmaco/fpipe`
+```bash
+cargo install --git https://github.com/alexmaco/fpipe
+```
+
+## Flags and features
+
+```
+fpipe 0.1.0
+
+Filter (and map) in a shell pipe
+'{}' arguments to the command are replaced with input line before execution
+
+USAGE:
+    fpipe [FLAGS] [cmd-and-args]...
+
+FLAGS:
+    -h, --help       Prints help information
+    -m, --map        perform mapping (only command output is emitted, only if successful)
+    -n, --negate     negate the command exit status
+    -q, --quiet      suppress stdout of subcommand (stderr is still propagated)
+    -V, --version    Prints version information
+
+ARGS:
+    <cmd-and-args>...    command to execute and its arguments
+```
+
+## TODO
+- more features
+- parallelism

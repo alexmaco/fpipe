@@ -4,6 +4,12 @@ version = "0.1.0"
 authors = ["Alexandru Macovei <alexnmaco@gmail.com>"]
 edition = "2018"
 license = "MIT"
+description = "fpipe is a tool that lets you filter and map in a shall pipe"
+keywords = ["cli", "filter", "pipe", "shell"]
+categories = ["command-line-utilities"]
+readme = "README.md"
+homepage = "https://github.com/alexmaco/fpipe"
+repository = "https://github.com/alexmaco/fpipe"
 
 [dev-dependencies]
 test_dir = "0.1.0"
