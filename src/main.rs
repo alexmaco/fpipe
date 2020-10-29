@@ -33,7 +33,7 @@ fn main() -> Result<(), String> {
                     .map(|out| out.map(|out| (out.status.success() ^ options.negate, out.stdout)))
                 {
                     None => None,
-                    Some(Ok((false, _))) => return Ok(()),
+                    Some(Ok((false, _))) => continue,
                     Some(Ok((true, out_buf))) => {
                         if options.map {
                             Some(out_buf)

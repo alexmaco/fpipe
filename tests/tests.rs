@@ -162,6 +162,13 @@ fn sigpipe_from_output_does_not_trigger_error() {
         .stderr("");
 }
 
+#[test]
+fn first_false_does_not_stop_processing() {
+    assert("1\n2\n3\n", &["-q", "expr", "2", "!=", "{}"])
+        .stdout("1\n3\n")
+        .stderr("");
+}
+
 fn assert(input: &str, args: &[&str]) -> Assert {
     let mut cmd = Command::cargo_bin(env!("CARGO_BIN_EXE_fpipe")).unwrap();
     cmd.args(args).write_stdin(input).assert().success()
