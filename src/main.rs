@@ -178,20 +178,20 @@ struct Options {
     #[structopt(
         short,
         long,
-        help = "suppress stdout of subcommand (stderr is still propagated)"
+        help = "Suppress stdout of subcommand (stderr is still propagated)"
     )]
     quiet: bool,
 
-    #[structopt(short, long, help = "negate the command exit status")]
+    #[structopt(short, long, help = "Negate the command exit status")]
     negate: bool,
 
     #[structopt(
         short,
         long,
-        help = "perform mapping (only command output is emitted, only if successful)"
+        help = "Perform mapping (only command output is emitted, only if successful)"
     )]
     map: bool,
 
-    #[structopt(required = false, help = "command to execute and its arguments")]
+    #[structopt(required = false, help = "Command to execute and its arguments")]
     cmd_and_args: Vec<String>,
 }
