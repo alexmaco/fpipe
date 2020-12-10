@@ -173,7 +173,7 @@ async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Op
 Filter (and map) in a shell pipe\n\
 '{}' arguments to the command are replaced with input line before execution
 ")]
-#[structopt(settings = &[clap::AppSettings::TrailingVarArg])]
+#[structopt(settings = &[clap::AppSettings::TrailingVarArg, clap::AppSettings::ColoredHelp])]
 struct Options {
     #[structopt(
         short,
