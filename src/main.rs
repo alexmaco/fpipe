@@ -150,7 +150,7 @@ async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Op
                 Err(e) => return Err(e),
             }
         };
-    };
+    }
 
     let mut child = cmd.spawn()?;
 
