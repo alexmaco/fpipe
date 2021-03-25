@@ -10,17 +10,18 @@ categories = ["command-line-utilities"]
 readme = "README.md"
 homepage = "https://github.com/alexmaco/fpipe"
 repository = "https://github.com/alexmaco/fpipe"
+resolver = "2"
 
 [dev-dependencies]
 test_dir = "0.1.0"
-assert_cmd = "1.0.2"
-predicates = "1.0.5"
+assert_cmd = "1.0.3"
+predicates = "1.0.7"
 
 [dependencies]
 structopt = "0.3.21"
 
 [dependencies.tokio]
-version = "1.0.0"
+version = "1.4.0"
 features = ["io-std", "io-util", "process", "rt"]
 
 [profile.release]
