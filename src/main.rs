@@ -119,7 +119,7 @@ async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Op
         Command::new(cmd_name)
     };
 
-    let (input, args) = substitute_cmd_args(&line, &options);
+    let (input, args) = substitute_cmd_args(line, options);
     cmd.args(args);
     if input.is_some() {
         cmd.stdin(Stdio::piped());
