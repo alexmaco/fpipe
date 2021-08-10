@@ -178,7 +178,7 @@ struct Options {
     #[structopt(
         short,
         long,
-        help = "Suppress stdout of subcommand (stderr is still propagated)"
+        help = "Suppress stdout of command (stderr is still propagated)"
     )]
     quiet: bool,
 

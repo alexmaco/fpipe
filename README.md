@@ -7,12 +7,12 @@ Filter (and map) in a shell pipe.
 For the times you need to filter (or map) in a shell pipe.
 
 Filtering (default):
-- reads input lines
+- reads stdin as lines
 - runs command for each line
 - prints line if command was successful
 
 Mapping (with `--map`):
-- reads input lines
+- reads stdin as lines
 - runs command for each line
 - if command was successful, output its stdout instead of the line
 
@@ -63,7 +63,7 @@ FLAGS:
     -h, --help       Prints help information
     -m, --map        perform mapping (only command output is emitted, only if successful)
     -n, --negate     negate the command exit status
-    -q, --quiet      suppress stdout of subcommand (stderr is still propagated)
+    -q, --quiet      suppress stdout of command (stderr is still propagated)
     -V, --version    Prints version information
 
 ARGS:
