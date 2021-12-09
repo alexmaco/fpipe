@@ -1,13 +1,13 @@
+use clap::{AppSettings, Parser};
 use std::io::ErrorKind;
 use std::process::{Output, Stdio};
 use std::sync::Arc;
-use structopt::*;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, Stdout};
 use tokio::process::Command;
 use tokio::runtime;
 
 fn main() -> Result<(), String> {
-    let options = Arc::new(Options::from_args());
+    let options = Arc::new(Options::parse());
 
     let rt = runtime::Builder::new_current_thread()
         .enable_io()
@@ -168,30 +168,33 @@ async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Op
     child.wait_with_output().await.map(Some)
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(about = "
+#[derive(Parser)]
+#[clap(
+    about = "
 Filter (and map) in a shell pipe\n\
 '{}' arguments to the command are replaced with input line before execution
-")]
-#[structopt(settings = &[clap::AppSettings::TrailingVarArg, clap::AppSettings::ColoredHelp])]
+",
+    version
+)]
+#[clap(global_setting(AppSettings::TrailingVarArg))]
 struct Options {
-    #[structopt(
+    #[clap(
         short,
         long,
         help = "Suppress stdout of command (stderr is still propagated)"
     )]
     quiet: bool,
 
-    #[structopt(short, long, help = "Negate the command exit status")]
+    #[clap(short, long, help = "Negate the command exit status")]
     negate: bool,
 
-    #[structopt(
+    #[clap(
         short,
         long,
         help = "Perform mapping (only command output is emitted, only if successful)"
     )]
     map: bool,
 
-    #[structopt(required = false, help = "Command to execute and its arguments")]
+    #[clap(required = false, help = "Command to execute and its arguments")]
     cmd_and_args: Vec<String>,
 }
