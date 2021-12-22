@@ -40,7 +40,7 @@ cat patterns | fpipe -m fd {} # short for --map
 
 If `{}` is not present in the command arguments, the line is passed to the subprocess via stdin.
 
-If `{}` is given, it gets replaced by each line in turn before execution.
+If `{}` is present, it gets replaced by each input line before execution.
 
 ## Installation
 
