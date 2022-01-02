@@ -99,7 +99,7 @@ fn substitute_cmd_args<'a>(
         .cmd_and_args
         .iter()
         .skip(1)
-        .map(move |arg| if arg == "{}" { line } else { &arg });
+        .map(move |arg| if arg == "{}" { line } else { arg });
 
     (input, args)
 }
