@@ -81,7 +81,9 @@ fn main() -> Result<(), String> {
             };
         }
 
-        Ok(())
+        // flush and exit, we don't need the dtors
+        let _ = out.flush().await;
+        std::process::exit(0);
     })
 }
 
