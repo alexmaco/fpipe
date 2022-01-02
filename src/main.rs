@@ -6,6 +6,11 @@ use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, Stdout};
 use tokio::process::Command;
 use tokio::runtime;
 
+struct ExecInfo {
+    command_from_imput: bool,
+    subprocess_takes_input: bool,
+}
+
 fn main() -> Result<(), String> {
     let options = Arc::new(Options::parse());
 
@@ -13,6 +18,14 @@ fn main() -> Result<(), String> {
         .enable_io()
         .build()
         .map_err(|e| format!("Failed to create runtime: {:?}", e))?;
+
+    let exec_info = ExecInfo {
+        command_from_imput: options
+            .cmd_and_args
+            .get(0)
+            .map_or(false, |name| name == "{}"),
+        subprocess_takes_input: !options.cmd_and_args.iter().any(|s| s == "{}"),
+    };
 
     rt.block_on(async {
         let mut out = io::stdout();
@@ -25,25 +38,21 @@ fn main() -> Result<(), String> {
             .map_err(|e| format!("Error reading from stdin: {:?}", e))?
         {
             let out_buf = if let Some(cmd_name) = options.cmd_and_args.get(0) {
-                let executing = cmd_name == "{}";
-
-                match run_cmd(&line, cmd_name, &options)
-                    .await
-                    .transpose()
-                    .map(|out| out.map(|out| (out.status.success() ^ options.negate, out.stdout)))
-                {
-                    None => None,
-                    Some(Ok((false, _))) => continue,
-                    Some(Ok((true, out_buf))) => {
-                        if options.map {
-                            Some(out_buf)
+                match run_cmd(&line, cmd_name, &options, &exec_info).await {
+                    Ok(None) => None,
+                    Ok(Some(res)) => {
+                        let succeded = res.status.success() ^ options.negate;
+                        if !succeded {
+                            continue;
+                        } else if options.map {
+                            Some(res.stdout)
                         } else {
                             None
                         }
                     }
-                    Some(Err(e)) => {
+                    Err(e) => {
                         let err = format!("Error executing command: {}", e);
-                        if executing {
+                        if exec_info.command_from_imput {
                             eprintln!("{}", err);
                             continue;
                         } else {
@@ -55,13 +64,12 @@ fn main() -> Result<(), String> {
                 None
             };
 
-            match write_out(
-                &mut out,
-                out_buf.as_deref().unwrap_or_else(|| line.as_bytes()),
-                out_buf.is_none(),
-            )
-            .await
-            {
+            let write_result = match out_buf {
+                Some(data) => write_out(&mut out, &data, false).await,
+                None => write_out(&mut out, line.as_bytes(), true).await,
+            };
+
+            match write_result {
                 Ok(()) => {}
                 Err(e) if e.kind() == ErrorKind::BrokenPipe => {
                     // output died
@@ -85,28 +93,13 @@ async fn write_out(out: &mut Stdout, data: &[u8], newline: bool) -> io::Result<(
     out.flush().await
 }
 
-fn substitute_cmd_args<'a>(
-    line: &'a str,
-    options: &'a Options,
-) -> (Option<&'a str>, impl Iterator<Item = &'a str> + 'a) {
-    let input = if options.cmd_and_args.iter().any(|s| s == "{}") {
-        None
-    } else {
-        Some(line)
-    };
-
-    let args = options
-        .cmd_and_args
-        .iter()
-        .skip(1)
-        .map(move |arg| if arg == "{}" { line } else { arg });
-
-    (input, args)
-}
-
-async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Option<Output>> {
-    let executing = cmd_name == "{}";
-    let mut cmd = if executing {
+async fn run_cmd(
+    line: &str,
+    cmd_name: &str,
+    options: &Options,
+    exec_info: &ExecInfo,
+) -> io::Result<Option<Output>> {
+    let mut cmd = if exec_info.command_from_imput {
         let mut bits = line.split_whitespace();
         let first = match bits.next() {
             Some(b) => b,
@@ -119,9 +112,15 @@ async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Op
         Command::new(cmd_name)
     };
 
-    let (input, args) = substitute_cmd_args(line, options);
-    cmd.args(args);
-    if input.is_some() {
+    cmd.args(
+        options
+            .cmd_and_args
+            .iter()
+            .skip(1)
+            .map(|arg| if arg == "{}" { line } else { arg }),
+    );
+
+    if exec_info.subprocess_takes_input {
         cmd.stdin(Stdio::piped());
     }
 
@@ -135,12 +134,12 @@ async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Op
 
     let mut child = cmd.spawn()?;
 
-    if let Some(input) = input {
+    if exec_info.subprocess_takes_input {
         let write_res = child
             .stdin
             .as_mut()
             .ok_or_else(|| io::Error::from(ErrorKind::BrokenPipe))?
-            .write_all(input.as_bytes())
+            .write_all(line.as_bytes())
             .await;
 
         // This is a race that is problematic to test.
