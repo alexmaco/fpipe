@@ -133,25 +133,6 @@ async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Op
         cmd.stdout(Stdio::piped());
     }
 
-    macro_rules! unwrap_ignore_sigpipe {
-        ($res:expr) => {
-            // This is a race that is problematic to test.
-            // The child process, at this point may either:
-            //  - have exited early, of its own accord
-            //  - have crashed
-            //  - not have stdin open
-            //  - have read some input, and exited before reading all of it
-            //
-            // After some manual testing, it seems safe to ignore BrokenPipe when it happens
-            // The final result will still be dictated by the child exit status
-            match $res {
-                Ok(_) => {}
-                Err(e) if e.kind() == ErrorKind::BrokenPipe => {}
-                Err(e) => return Err(e),
-            }
-        };
-    }
-
     let mut child = cmd.spawn()?;
 
     if let Some(input) = input {
@@ -162,7 +143,20 @@ async fn run_cmd(line: &str, cmd_name: &str, options: &Options) -> io::Result<Op
             .write_all(input.as_bytes())
             .await;
 
-        unwrap_ignore_sigpipe!(write_res);
+        // This is a race that is problematic to test.
+        // The child process, at this point may either:
+        //  - have exited early, of its own accord
+        //  - have crashed
+        //  - not have stdin open
+        //  - have read some input, and exited before reading all of it
+        //
+        // After some manual testing, it seems safe to ignore BrokenPipe when it happens
+        // The final result will still be dictated by the child exit status
+        match write_res {
+            Ok(_) => {}
+            Err(e) if e.kind() == ErrorKind::BrokenPipe => {}
+            Err(e) => return Err(e),
+        }
     }
 
     child.wait_with_output().await.map(Some)
