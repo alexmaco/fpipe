@@ -51,7 +51,7 @@ cargo install fpipe
 ## Flags and features
 
 ```
-fpipe 0.1.1
+fpipe 0.1.2
 
 Filter (and map) in a shell pipe
 '{}' arguments to the command are replaced with input line before execution
