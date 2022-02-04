@@ -1,7 +1,6 @@
 use clap::{AppSettings, Parser};
 use std::io::ErrorKind;
 use std::process::{Output, Stdio};
-use std::sync::Arc;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, Stdout};
 use tokio::process::Command;
 use tokio::runtime;
@@ -12,7 +11,7 @@ struct ExecInfo {
 }
 
 fn main() -> Result<(), String> {
-    let options = Arc::new(Options::parse());
+    let options = Options::parse();
 
     let rt = runtime::Builder::new_current_thread()
         .enable_io()
