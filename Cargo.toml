@@ -13,18 +13,20 @@ repository = "https://github.com/alexmaco/fpipe"
 resolver = "2"
 
 [dev-dependencies]
-test_dir = "0.1.0"
-assert_cmd = "2.0.2"
-predicates = "2.1.0"
+test_dir = "0.2.0"
+assert_cmd = "2.0.10"
+predicates = "3.0.1"
+
+[dependencies]
+concolor-clap = "0.1.0"
 
 [dependencies.clap]
-version = "3.0.5"
-default_features = false
-features = ["std", "derive", "color"]
+version = "4.1.13"
+features = ["derive"]
 
 [dependencies.tokio]
-version = "1.15.0"
-default_features = false
+version = "1.26.0"
+default-features = false
 features = ["io-std", "io-util", "process", "rt"]
 
 [profile.release]

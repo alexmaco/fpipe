@@ -1,4 +1,4 @@
-use clap::{AppSettings, Parser};
+use clap::Parser;
 use std::io::ErrorKind;
 use std::process::{Output, Stdio};
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, Stdout};
@@ -163,32 +163,31 @@ async fn run_cmd(
 }
 
 #[derive(Parser)]
-#[clap(
+#[command(
     about = "
 Filter (and map) in a shell pipe\n\
-'{}' arguments to the command are replaced with input line before execution
-",
-    version
+'{}' arguments to the command are replaced with input line before execution",
+    version,
+    trailing_var_arg = true
 )]
-#[clap(global_setting(AppSettings::TrailingVarArg))]
 struct Options {
-    #[clap(
+    #[arg(
         short,
         long,
         help = "Suppress stdout of command (stderr is still propagated)"
     )]
     quiet: bool,
 
-    #[clap(short, long, help = "Negate the command exit status")]
+    #[arg(short, long, help = "Negate the command exit status")]
     negate: bool,
 
-    #[clap(
+    #[arg(
         short,
         long,
         help = "Perform mapping (only command output is emitted, only if successful)"
     )]
     map: bool,
 
-    #[clap(required = false, help = "Command to execute and its arguments")]
+    #[arg(required = false, help = "Command to execute and its arguments")]
     cmd_and_args: Vec<String>,
 }
