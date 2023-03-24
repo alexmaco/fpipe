@@ -1,5 +1,11 @@
 # Upcoming release
 
+# v0.1.3
+
+## Dependencies
+- Upgrade to clap to 4.x
+- Bump other dependencies
+
 # v0.1.2
 
 ## Dependencies

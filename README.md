@@ -51,23 +51,22 @@ cargo install fpipe
 ## Flags and features
 
 ```
-fpipe 0.1.2
+fpipe 0.1.3
 
 Filter (and map) in a shell pipe
 '{}' arguments to the command are replaced with input line before execution
 
-USAGE:
-    fpipe [OPTIONS] [CMD_AND_ARGS]...
+Usage: fpipe [OPTIONS] [CMD_AND_ARGS]...
 
-ARGS:
-    <CMD_AND_ARGS>...    Command to execute and its arguments
+Arguments:
+  [CMD_AND_ARGS]...  Command to execute and its arguments
 
-OPTIONS:
-    -h, --help       Print help information
-    -m, --map        Perform mapping (only command output is emitted, only if successful)
-    -n, --negate     Negate the command exit status
-    -q, --quiet      Suppress stdout of command (stderr is still propagated)
-    -V, --version    Print version information
+Options:
+  -q, --quiet    Suppress stdout of command (stderr is still propagated)
+  -n, --negate   Negate the command exit status
+  -m, --map      Perform mapping (only command output is emitted, only if successful)
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
 ## TODO
